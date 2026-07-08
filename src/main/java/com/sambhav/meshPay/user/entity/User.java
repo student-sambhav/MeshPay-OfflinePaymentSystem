@@ -27,6 +27,5 @@ public class User {
 
     private BigDecimal balance;
 
-    @Lob
     private String publicKey;
 }

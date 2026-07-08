@@ -1,5 +1,6 @@
 package com.sambhav.meshPay.user.service;
 
+import com.sambhav.meshPay.common.exception.ResourceAlreadyExistsException;
 import com.sambhav.meshPay.user.dto.RegisterRequest;
 import com.sambhav.meshPay.user.entity.User;
 import com.sambhav.meshPay.user.repository.UserRepository;
@@ -17,7 +18,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     public String register(RegisterRequest request){
         if(userRepository.existsByPhoneNumber(request.getPhoneNumber())){
-            throw new RuntimeException("Phone number Already Exists");
+            throw new ResourceAlreadyExistsException("Phone number Already Exists");
         }
         User user=User.builder()
                 .name(request.getName())
