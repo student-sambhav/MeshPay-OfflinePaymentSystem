@@ -1,4 +1,4 @@
-package com.sambhav.meshPay.security;
+/*package com.sambhav.meshPay.security;
 
 import com.sambhav.meshPay.auth.security.JwtAuthenticationFilter;
 import com.sambhav.meshPay.auth.security.CustomUserDetailsService;
@@ -19,6 +19,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @RequiredArgsConstructor
+@Profile("prod")
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -82,4 +83,4 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-}
+}*/
