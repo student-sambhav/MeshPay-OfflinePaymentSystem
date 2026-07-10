@@ -1,5 +1,8 @@
 package com.sambhav.meshPay.payment.service;
 
+import com.sambhav.meshPay.crypto.aes.AESUtil;
+import com.sambhav.meshPay.crypto.rsa.RSAKeyStore;
+import com.sambhav.meshPay.crypto.rsa.RSAUtil;
 import com.sambhav.meshPay.device.entity.Device;
 import com.sambhav.meshPay.device.repository.DeviceRepository;
 import com.sambhav.meshPay.mesh.algorithm.RoutingEngine;
@@ -12,7 +15,10 @@ import com.sambhav.meshPay.payment.repository.PaymentPacketRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import javax.crypto.SecretKey;
+import java.security.KeyPair;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -24,6 +30,8 @@ public class PaymentServiceImpl implements PaymentService {
     private final PaymentPacketRepository paymentRepository;
     private final RoutingEngine routingEngine;
     private final PacketForwardingService packetForwardingService;
+
+    private final KeyPair keyPair = RSAKeyStore.getKeyPair();
 
     @Override
     public PaymentResponse createPayment(CreatePaymentRequest request) {
@@ -43,13 +51,58 @@ public class PaymentServiceImpl implements PaymentService {
             throw new RuntimeException("No route found between devices");
         }
 
-        List<String> route = new java.util.ArrayList<>(
+        // Convert route to deviceIds
+        List<String> route = new ArrayList<>(
                 path.stream()
                         .map(Device::getDeviceId)
                         .toList()
         );
 
-        // Create packet
+        // ==========================
+        // CREATE PAYLOAD
+        // ==========================
+
+        String payload = """
+                {
+                    "sender":"%s",
+                    "receiver":"%s",
+                    "amount":%s
+                }
+                """.formatted(
+                sender.getDeviceId(),
+                receiver.getDeviceId(),
+                request.getAmount()
+        );
+
+        // AES ENCRYPTION
+
+        SecretKey aesKey = AESUtil.generateKey();
+
+        String encryptedPayload = AESUtil.encrypt(payload, aesKey);
+        String encodedKey = AESUtil.encodeKey(aesKey);
+
+        // RSA SIGNATURE
+
+        String digitalSignature = RSAUtil.sign(
+                encryptedPayload,
+                keyPair.getPrivate()
+        );
+
+        // ==========================
+        // DEBUG
+        // ==========================
+
+        System.out.println("Original Payload:");
+        System.out.println(payload);
+
+        System.out.println("\nEncrypted Payload:");
+        System.out.println(encryptedPayload);
+
+        System.out.println("\nDigital Signature:");
+        System.out.println(digitalSignature);
+
+        // ==========================
+
         PaymentPacket packet = PaymentPacket.builder()
                 .packetId(UUID.randomUUID().toString())
                 .sender(sender)
@@ -60,15 +113,15 @@ public class PaymentServiceImpl implements PaymentService {
                 .createdAt(LocalDateTime.now())
                 .currentHop(0)
                 .route(route)
+                .encryptedPayload(encryptedPayload)
+                .aesKey(encodedKey)
+                .digitalSignature(digitalSignature)
                 .build();
 
-        // Save packet
         PaymentPacket savedPacket = paymentRepository.save(packet);
 
-        // Start forwarding
         packetForwardingService.forwardPacket(savedPacket);
 
-        // Return response
         return PaymentResponse.builder()
                 .packetId(savedPacket.getPacketId())
                 .senderDeviceId(savedPacket.getSender().getDeviceId())

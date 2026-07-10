@@ -46,11 +46,12 @@ public class PaymentPacket {
 
     @Column(nullable = false)
     private LocalDateTime createdAt;
-
-    @Lob
+    @Column(columnDefinition = "TEXT")
+    private String aesKey;
+    @Column(columnDefinition = "TEXT")
     private String digitalSignature;
 
-    @Lob
+    @Column(columnDefinition = "TEXT")
     private String encryptedPayload;
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
