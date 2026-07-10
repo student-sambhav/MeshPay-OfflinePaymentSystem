@@ -7,6 +7,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -51,4 +52,13 @@ public class PaymentPacket {
 
     @Lob
     private String encryptedPayload;
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(
+            name = "packet_route",
+            joinColumns = @JoinColumn(name = "packet_id")
+    )
+    @Column(name = "device_id")
+    private List<String> route;
+    @Column(nullable = false)
+    private Integer currentHop;
 }

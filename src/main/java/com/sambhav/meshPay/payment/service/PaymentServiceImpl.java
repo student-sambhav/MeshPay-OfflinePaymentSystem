@@ -4,6 +4,7 @@ import com.sambhav.meshPay.device.entity.Device;
 import com.sambhav.meshPay.device.repository.DeviceRepository;
 import com.sambhav.meshPay.mesh.algorithm.RoutingEngine;
 import com.sambhav.meshPay.payment.dto.CreatePaymentRequest;
+import com.sambhav.meshPay.payment.dto.PaymentResponse;
 import com.sambhav.meshPay.payment.entity.PaymentPacket;
 import com.sambhav.meshPay.payment.enums.PacketStatus;
 import com.sambhav.meshPay.payment.forwarding.PacketForwardingService;
@@ -25,20 +26,30 @@ public class PaymentServiceImpl implements PaymentService {
     private final PacketForwardingService packetForwardingService;
 
     @Override
-    public PaymentPacket createPayment(CreatePaymentRequest request) {
+    public PaymentResponse createPayment(CreatePaymentRequest request) {
 
+        // Find sender
         Device sender = deviceRepository.findByDeviceId(request.getSenderDeviceId())
                 .orElseThrow(() -> new RuntimeException("Sender device not found"));
 
+        // Find receiver
         Device receiver = deviceRepository.findByDeviceId(request.getReceiverDeviceId())
                 .orElseThrow(() -> new RuntimeException("Receiver device not found"));
 
+        // Find shortest path using BFS
         List<Device> path = routingEngine.findShortestPath(sender, receiver);
 
         if (path.isEmpty()) {
             throw new RuntimeException("No route found between devices");
         }
 
+        List<String> route = new java.util.ArrayList<>(
+                path.stream()
+                        .map(Device::getDeviceId)
+                        .toList()
+        );
+
+        // Create packet
         PaymentPacket packet = PaymentPacket.builder()
                 .packetId(UUID.randomUUID().toString())
                 .sender(sender)
@@ -47,13 +58,24 @@ public class PaymentServiceImpl implements PaymentService {
                 .ttl(10)
                 .status(PacketStatus.CREATED)
                 .createdAt(LocalDateTime.now())
+                .currentHop(0)
+                .route(route)
                 .build();
 
+        // Save packet
         PaymentPacket savedPacket = paymentRepository.save(packet);
 
+        // Start forwarding
         packetForwardingService.forwardPacket(savedPacket);
 
-        return savedPacket;
-
+        // Return response
+        return PaymentResponse.builder()
+                .packetId(savedPacket.getPacketId())
+                .senderDeviceId(savedPacket.getSender().getDeviceId())
+                .receiverDeviceId(savedPacket.getReceiver().getDeviceId())
+                .amount(savedPacket.getAmount())
+                .status(savedPacket.getStatus())
+                .route(savedPacket.getRoute())
+                .build();
     }
 }

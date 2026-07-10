@@ -4,21 +4,28 @@ import com.sambhav.meshPay.common.exception.ResourceAlreadyExistsException;
 import com.sambhav.meshPay.common.exception.ResourceNotFoundException;
 import com.sambhav.meshPay.device.entity.Device;
 import com.sambhav.meshPay.device.repository.DeviceRepository;
+import com.sambhav.meshPay.mesh.algorithm.RoutingEngine;
 import com.sambhav.meshPay.mesh.dto.ConnectDeviceRequest;
+import com.sambhav.meshPay.mesh.dto.MeshConnectionResponse;
+import com.sambhav.meshPay.mesh.dto.RouteRequest;
 import com.sambhav.meshPay.mesh.entity.MeshConnection;
+import com.sambhav.meshPay.mesh.dto.MeshConnectionResponse;
 import com.sambhav.meshPay.mesh.repository.MeshConnectionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class MeshServiceImpl implements MeshService {
 
     private final DeviceRepository deviceRepository;
+    private final RoutingEngine routingEngine;
     private final MeshConnectionRepository meshConnectionRepository;
 
     @Override
-    public MeshConnection connectDevices(ConnectDeviceRequest request) {
+    public MeshConnectionResponse connectDevices(ConnectDeviceRequest request) {
 
         Device source = deviceRepository.findByDeviceId(request.getSourceDeviceId())
                 .orElseThrow(() ->
@@ -54,6 +61,35 @@ public class MeshServiceImpl implements MeshService {
                 .active(true)
                 .build();
 
-        return meshConnectionRepository.save(connection);
+        MeshConnection saved = meshConnectionRepository.save(connection);
+
+        return MeshConnectionResponse.builder()
+                .id(saved.getId())
+                .sourceDeviceId(saved.getSourceDevice().getDeviceId())
+                .targetDeviceId(saved.getTargetDevice().getDeviceId())
+                .signalStrength(saved.getSignalStrength())
+                .active(saved.isActive())
+                .build();
+    }
+    @Override
+    public List<String> findRoute(RouteRequest request) {
+
+        Device source = deviceRepository.findByDeviceId(request.getSourceDeviceId())
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Source device not found"));
+
+        Device destination = deviceRepository.findByDeviceId(request.getDestinationDeviceId())
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Destination device not found"));
+
+        List<Device> path = routingEngine.findShortestPath(source, destination);
+
+        if (path.isEmpty()) {
+            throw new RuntimeException("No route found between devices");
+        }
+
+        return path.stream()
+                .map(Device::getDeviceId)
+                .toList();
     }
 }
