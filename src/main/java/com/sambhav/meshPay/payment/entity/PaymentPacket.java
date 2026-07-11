@@ -62,4 +62,6 @@ public class PaymentPacket {
     private List<String> route;
     @Column(nullable = false)
     private Integer currentHop;
+    @Column(unique = true)
+    private String idempotencyKey;
 }

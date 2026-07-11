@@ -8,6 +8,7 @@ import com.sambhav.meshPay.device.repository.DeviceRepository;
 import com.sambhav.meshPay.mesh.algorithm.RoutingEngine;
 import com.sambhav.meshPay.payment.dto.CreatePaymentRequest;
 import com.sambhav.meshPay.payment.dto.PaymentResponse;
+import com.sambhav.meshPay.payment.dto.TransactionResponse;
 import com.sambhav.meshPay.payment.entity.PaymentPacket;
 import com.sambhav.meshPay.payment.enums.PacketStatus;
 import com.sambhav.meshPay.payment.forwarding.PacketForwardingService;
@@ -20,6 +21,7 @@ import java.security.KeyPair;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -36,22 +38,51 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     public PaymentResponse createPayment(CreatePaymentRequest request) {
 
+        // ==========================
+        // IDEMPOTENCY CHECK
+        // ==========================
+
+        Optional<PaymentPacket> existingPacket =
+                paymentRepository.findByIdempotencyKey(request.getIdempotencyKey());
+
+        if (existingPacket.isPresent()) {
+
+            PaymentPacket packet = existingPacket.get();
+
+            return PaymentResponse.builder()
+                    .packetId(packet.getPacketId())
+                    .senderDeviceId(packet.getSender().getDeviceId())
+                    .receiverDeviceId(packet.getReceiver().getDeviceId())
+                    .amount(packet.getAmount())
+                    .status(packet.getStatus())
+                    .route(packet.getRoute())
+                    .build();
+        }
+
+        // ==========================
         // Find sender
+        // ==========================
+
         Device sender = deviceRepository.findByDeviceId(request.getSenderDeviceId())
                 .orElseThrow(() -> new RuntimeException("Sender device not found"));
 
+        // ==========================
         // Find receiver
+        // ==========================
+
         Device receiver = deviceRepository.findByDeviceId(request.getReceiverDeviceId())
                 .orElseThrow(() -> new RuntimeException("Receiver device not found"));
 
-        // Find shortest path using BFS
+        // ==========================
+        // Find shortest path
+        // ==========================
+
         List<Device> path = routingEngine.findShortestPath(sender, receiver);
 
         if (path.isEmpty()) {
             throw new RuntimeException("No route found between devices");
         }
 
-        // Convert route to deviceIds
         List<String> route = new ArrayList<>(
                 path.stream()
                         .map(Device::getDeviceId)
@@ -74,14 +105,18 @@ public class PaymentServiceImpl implements PaymentService {
                 request.getAmount()
         );
 
+        // ==========================
         // AES ENCRYPTION
+        // ==========================
 
         SecretKey aesKey = AESUtil.generateKey();
 
         String encryptedPayload = AESUtil.encrypt(payload, aesKey);
         String encodedKey = AESUtil.encodeKey(aesKey);
 
+        // ==========================
         // RSA SIGNATURE
+        // ==========================
 
         String digitalSignature = RSAUtil.sign(
                 encryptedPayload,
@@ -102,9 +137,12 @@ public class PaymentServiceImpl implements PaymentService {
         System.out.println(digitalSignature);
 
         // ==========================
+        // CREATE PAYMENT PACKET
+        // ==========================
 
         PaymentPacket packet = PaymentPacket.builder()
                 .packetId(UUID.randomUUID().toString())
+                .idempotencyKey(request.getIdempotencyKey())
                 .sender(sender)
                 .receiver(receiver)
                 .amount(request.getAmount())
@@ -130,5 +168,25 @@ public class PaymentServiceImpl implements PaymentService {
                 .status(savedPacket.getStatus())
                 .route(savedPacket.getRoute())
                 .build();
+    }
+    @Override
+    public List<TransactionResponse> getTransactionHistory(String deviceId) {
+
+        List<PaymentPacket> packets =
+                paymentRepository.findBySender_DeviceIdOrReceiver_DeviceId(
+                        deviceId,
+                        deviceId
+                );
+
+        return packets.stream()
+                .map(packet -> TransactionResponse.builder()
+                        .packetId(packet.getPacketId())
+                        .senderDeviceId(packet.getSender().getDeviceId())
+                        .receiverDeviceId(packet.getReceiver().getDeviceId())
+                        .amount(packet.getAmount())
+                        .status(packet.getStatus())
+                        .createdAt(packet.getCreatedAt())
+                        .build())
+                .toList();
     }
 }

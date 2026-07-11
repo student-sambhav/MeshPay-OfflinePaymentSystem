@@ -30,4 +30,8 @@ public class MeshController {
     public List<String> findRoute(@RequestBody RouteRequest request) {
         return meshService.findRoute(request);
     }
+    @GetMapping
+    public List<MeshConnectionResponse> getConnections() {
+        return meshService.getConnections();
+    }
 }

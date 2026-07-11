@@ -19,4 +19,5 @@ public class CreatePaymentRequest {
     @NotNull
     @DecimalMin("1.0")
     private BigDecimal amount;
+    private String idempotencyKey;
 }

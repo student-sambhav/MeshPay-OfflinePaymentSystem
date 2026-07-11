@@ -11,5 +11,6 @@ public interface MeshService {
 
     MeshConnectionResponse connectDevices(ConnectDeviceRequest request);
     List<String> findRoute(RouteRequest request);
+    List<MeshConnectionResponse> getConnections();
 
 }

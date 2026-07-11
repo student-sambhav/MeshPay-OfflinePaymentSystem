@@ -1,4 +1,4 @@
-package com.sambhav.meshPay.security;
+/*package com.sambhav.meshPay.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -32,4 +32,4 @@ public class SecurityConfigDev {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-}
+}*/

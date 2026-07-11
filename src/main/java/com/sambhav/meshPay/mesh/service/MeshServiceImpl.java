@@ -92,4 +92,19 @@ public class MeshServiceImpl implements MeshService {
                 .map(Device::getDeviceId)
                 .toList();
     }
+
+    @Override
+    public List<MeshConnectionResponse> getConnections() {
+
+        return meshConnectionRepository.findAll()
+                .stream()
+                .map(connection -> MeshConnectionResponse.builder()
+                        .id(connection.getId())
+                        .sourceDeviceId(connection.getSourceDevice().getDeviceId())
+                        .targetDeviceId(connection.getTargetDevice().getDeviceId())
+                        .signalStrength(connection.getSignalStrength())
+                        .active(connection.isActive())
+                        .build())
+                .toList();
+    }
 }

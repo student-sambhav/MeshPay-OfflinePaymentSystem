@@ -1,10 +1,11 @@
-/*package com.sambhav.meshPay.security;
+package com.sambhav.meshPay.security;
 
 import com.sambhav.meshPay.auth.security.JwtAuthenticationFilter;
 import com.sambhav.meshPay.auth.security.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -35,7 +36,12 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/auth/register",
                                 "/auth/login",
-                                "/api/mesh/**"
+                                "/api/mesh/**",
+                                "/api/payment/**",
+                                // Swagger
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html"
                         ).permitAll()
                         .anyRequest()
                         .authenticated()
@@ -83,4 +89,4 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-}*/
+}

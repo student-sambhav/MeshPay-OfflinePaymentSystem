@@ -7,6 +7,7 @@ import com.sambhav.meshPay.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -24,5 +25,9 @@ public class DeviceServiceImpl implements DeviceService{
                 .owner(owner)
                 .build();
         return deviceRepository.save(device);
+    }
+    @Override
+    public List<Device> getAllDevices() {
+        return deviceRepository.findAll();
     }
 }

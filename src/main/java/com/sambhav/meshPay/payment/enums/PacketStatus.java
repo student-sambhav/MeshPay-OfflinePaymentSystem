@@ -12,6 +12,8 @@ public enum PacketStatus {
 
     FAILED,
 
-    EXPIRED
+    EXPIRED,
+
+    QUEUED
 
 }

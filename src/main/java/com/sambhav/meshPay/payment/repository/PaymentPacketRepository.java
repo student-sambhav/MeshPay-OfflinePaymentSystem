@@ -13,5 +13,13 @@ public interface PaymentPacketRepository
     Optional<PaymentPacket> findByPacketId(String packetId);
 
     List<PaymentPacket> findByStatus(PacketStatus status);
+    Optional<PaymentPacket> findByIdempotencyKey(String key);
+    List<PaymentPacket> findBySender_DeviceIdOrReceiver_DeviceId(
+            String senderDeviceId,
+            String receiverDeviceId
+    );
+    long countByStatus(PacketStatus status);
+
+    List<PaymentPacket> findTop5ByOrderByCreatedAtDesc();
 
 }
