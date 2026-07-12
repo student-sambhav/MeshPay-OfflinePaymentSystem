@@ -21,5 +21,6 @@ public interface PaymentPacketRepository
     long countByStatus(PacketStatus status);
 
     List<PaymentPacket> findTop5ByOrderByCreatedAtDesc();
+    long count();
 
 }

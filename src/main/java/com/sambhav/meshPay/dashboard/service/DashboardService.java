@@ -4,5 +4,6 @@ import com.sambhav.meshPay.dashboard.dto.DashboardResponse;
 
 public interface DashboardService {
 
-    DashboardResponse getDashboard();
+    DashboardResponse getDashboard(String phoneNumber);
+
 }

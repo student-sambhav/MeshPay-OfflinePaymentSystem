@@ -4,6 +4,8 @@ import com.sambhav.meshPay.common.response.ApiResponse;
 import com.sambhav.meshPay.dashboard.dto.DashboardResponse;
 import com.sambhav.meshPay.dashboard.service.DashboardService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -14,13 +16,19 @@ public class DashboardController {
     private final DashboardService dashboardService;
 
     @GetMapping
-    public ApiResponse<DashboardResponse> getDashboard() {
+    public ApiResponse<DashboardResponse> getDashboard(
+            Authentication authentication) {
 
-        DashboardResponse response = dashboardService.getDashboard();
+        UserDetails userDetails =
+                (UserDetails) authentication.getPrincipal();
 
-        return ApiResponse.success(
-                "Dashboard fetched successfully",
-                response
-        );
+        DashboardResponse response =
+                dashboardService.getDashboard(userDetails.getUsername());
+
+        return ApiResponse.<DashboardResponse>builder()
+                .success(true)
+                .message("Dashboard fetched successfully")
+                .data(response)
+                .build();
     }
 }

@@ -64,4 +64,5 @@ public class PaymentPacket {
     private Integer currentHop;
     @Column(unique = true)
     private String idempotencyKey;
+    private LocalDateTime deliveredAt;
 }
