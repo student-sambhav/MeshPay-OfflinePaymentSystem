@@ -1,5 +1,4 @@
 import { useMemo } from "react";
-
 import ReactFlow, {
   Background,
   Controls,
@@ -15,9 +14,10 @@ import {
 } from "lucide-react";
 
 import DeviceNode from "./DeviceNode";
+import LivePackets from "./LivePackets";
 import {
-  initialEdges,
   initialNodes,
+  initialEdges,
 } from "./meshData";
 
 export default function LiveMeshGraph() {
@@ -69,7 +69,9 @@ export default function LiveMeshGraph() {
 
         {/* Graph */}
 
-        <div className="col-span-9 border-r border-slate-800">
+        <div className="relative col-span-9 border-r border-slate-800">
+
+          <LivePackets />
 
           <ReactFlow
             nodes={initialNodes}
@@ -80,7 +82,7 @@ export default function LiveMeshGraph() {
               padding: 0.25,
             }}
             minZoom={0.6}
-            maxZoom={1.6}
+            maxZoom={1.5}
             attributionPosition="bottom-left"
           >
 
@@ -158,7 +160,7 @@ function SummaryCard({
   bg,
 }) {
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-800 p-4">
+    <div className="rounded-2xl border border-slate-800 bg-slate-800 p-4 transition hover:border-blue-500 hover:bg-slate-700">
 
       <div className="flex items-center gap-3">
 

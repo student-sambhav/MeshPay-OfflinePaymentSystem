@@ -9,7 +9,7 @@ import Payments from "./pages/Payments";
 import MeshExplorer from "./pages/MeshExplorer";
 import PacketMonitor from "./pages/PacketMonitor";
 import History from "./pages/History";
-import EncryptionDemo from "./pages/EncryptionDemo";
+import Encryption from "./pages/Encryption";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Settings from "./pages/Settings";
@@ -58,7 +58,10 @@ function App() {
           <Route path="/payments" element={<Payments />} />
           <Route path="/packets" element={<PacketMonitor />} />
           <Route path="/history" element={<History />} />
-          <Route path="/encryption" element={<EncryptionDemo />} />
+          <Route
+  path="/encryption"
+  element={<Encryption />}
+/>
           <Route path="/settings" element={<Settings />} />
         </Route>
       </Routes>
